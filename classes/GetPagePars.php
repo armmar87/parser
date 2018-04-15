@@ -6,24 +6,24 @@ class GetPagePars
     public $get_all_pars = array();
     public $contents = array();
 
-    public function getParsUrl($url)
+    public function
+    getParsUrl( $url )
     {
 
         libxml_use_internal_errors(true);
-
         $doc = new DOMDocument();
-        $doc->loadHTMLFile($url);
+        $file_headers = @get_headers($url);
+        if($file_headers[0] == 'HTTP/1.1 200 OK') {
+            $doc->loadHTMLFile($url);
+        } else {
+            return false;
+        }
         $doc->preserveWhiteSpace = FALSE;
 
-
-//        $dom = new DOMDocument();
-//        $dom->loadHTML($html);
-//        $dom->saveHTML();
-//        var_dump($html); die;
-
-
         $tag_title = $doc->getElementsByTagName('title');
-        $this->contents[] = $doc->getElementsByTagName('div');
+        $tag_a = $doc->getElementsByTagName('a');
+//        $this->contents[] = $doc->getElementsByTagName('div');
+        $this->contents[] = $tag_a;
         $this->contents[] = $doc->getElementsByTagName('p');
         $this->contents[] = $doc->getElementsByTagName('h1');
         $this->contents[] = $doc->getElementsByTagName('h2');
@@ -47,11 +47,35 @@ class GetPagePars
         }
         $this->get_all_pars['content'] = $content;
 
-//        $this->get_all_pars['tree_model'] = '333';
-        $this->get_all_pars['tree_model'] = $html = file_get_contents($url);
+        $this->get_all_pars['tree_model'] = htmlentities(file_get_contents($url));
 
+//        if($tag_a->length > 0){
+//            DB::getInstance()->insert('pages', $this->get_all_pars);
+//            $attr_href_all = [];
+//            foreach ($tag_a as $element) {
+//                $attr_href_all[] = $element->getAttribute('href');
+//
+//            }
+//            foreach ($attr_href_all as $attr_href ) {
+//                preg_match('@^(?:http://)?([^/]+)@i', $attr_href, $matches1);
+//                preg_match('@^(?:http://)?([^/]+)@i', $url, $matches2);
+//                $host1 = isset($matches1[1])?$matches1[1]:'';
+//                $host2 = isset($matches2[1])?$matches2[1]:'';
+//                if(($host1 == $host2) && ($attr_href != $url)) {
+//                    $page = new GetPagePars();
+//                    $page->getParsUrl($attr_href);
+//                }
+//            }
+//
+//            return false;
+//        }
 
-        return $this->get_all_pars;
+        $uniq_id = uniqid();
+        $this->get_all_pars['uniq_id'] = $uniq_id;
+        DB::getInstance()->insert('pages', $this->get_all_pars);
+
+        $this->createXmlFile($this->get_all_pars);
+
     }
 
     public function getPageContains($element, $content)
@@ -59,10 +83,39 @@ class GetPagePars
         $element_length = $element->length;
         if($element_length > 0){
             for ($i = 0; $i < $element_length; $i++) {
-                $content .= trim($element->item($i)->nodeValue);
+                $element_value = $element->item($i)->nodeValue;
+                if(preg_match('/[^a-zA-Z]+/', $element_value)){
+                    $content .= trim($element_value);
+                }
             }
         }
         return $content;
+    }
+
+    public function createXmlFile($page_contnents)
+    {
+        $xml = new DOMDocument("1.0". "UTF-8");
+        $xml->preserveWhiteSpace = FALSE;
+
+        $container = $xml->createElement("container");
+        $container = $xml->appendChild($container);
+
+        $page = $xml->createElement("page");
+        $page = $container->appendChild($page);
+
+        $url = $xml->createElement("url", $page_contnents['url']);
+        $url = $page->appendChild($url);
+
+        $title = $xml->createElement("title", $page_contnents['title']);
+        $title = $page->appendChild($title);
+
+        $content = $xml->createElement("content", $page_contnents['content']);
+        $content = $page->appendChild($content);
+
+        $xml->FormatOutput = true;
+        $xml->saveXML();
+        $xml->save('xml/page_' . $page_contnents['uniq_id'] . '.xml');
+
     }
 
 }

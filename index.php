@@ -3,15 +3,13 @@ require_once 'core/init.php';
 
 
 if(isset($_POST['url'])) {
-
     $url = $_POST['url'];
     $getPars = new GetPagePars();
     $getPars->getParsUrl($url);
-//    echo '<pre>'; print_r($getPars->get_all_pars); die;
-
-    DB::getInstance()->insert('pages', $getPars->get_all_pars);
-
 }
+
+$links = '';
+
 
 $pages = DB::getInstance()->query('SELECT * FROM pages');
 
@@ -29,31 +27,75 @@ $pages = DB::getInstance()->query('SELECT * FROM pages');
     }
 </style>
 <body>
+<div>
+    <div>
+        <form action="" method="post" style="margin-bottom: 30px">
+            <div style="float: left">
+                <label>Parse Url:</label>
+                <input type="text" name="url"><br>
+            </div>
+            <input type="submit" value="Parse">
+        </form>
 
-<form action="" method="post" style="margin-bottom: 50px">
-    <div style="float: left">
-        parse url: <input type="text" name="url" placeholder="url"><br>
-    </div>
-    <input type="submit" value="parse">
-</form>
-<?php if(count($pages->results()) > 0) {?>
-    <table style="width:80%">
-        <tr>
-            <th>#</th>
-            <th>Url</th>
-            <th>Title</th>
-            <th>Export</th>
-        </tr>
-        <?php foreach($pages->results() as $page) {?>
-            <tr>
-                <td><?=$page->id?></td>
-                <td><?=$page->url?></td>
-                <td><?=$page->title?></td>
-                <td><?=$page->url?></td>
-            </tr>
+        <?php if(count($pages->results()) > 0) {?>
+            <table style="width:80%">
+                <tr>
+                    <th>#</th>
+                    <th>Url</th>
+                    <th>Title</th>
+                    <th>Export</th>
+                </tr>
+
+                    <?php foreach($pages->results() as $page) {?>
+                    <tr>
+                        <td><?=$page->id?></td>
+                        <td><a href="<?=$page->url?>" target="_blank"><?=$page->url?></a></td>
+                        <td><?=$page->title?></td>
+                        <td><a href="/xml/page_<?php echo $page->uniq_id ?>.xml" download>Export Xml</a></td>
+                    </tr>
+                <?php }?>
+            </table>
         <?php }?>
-    </table>
-<?php }?>
+
+    </div>
+    <div>
+        <form action="" method="post" style="margin-bottom: 20px;margin-top: 50px;">
+            <div style="float: left">
+                <label>Search Links:</label>
+                <input type="text" name="search"><br>
+            </div>
+            <input type="submit" value="Search">
+        </form>
+
+        <?php
+            if(isset($_POST['search'])) {
+                $search = $_POST['search'];
+                $links = DB::getInstance()->query('SELECT id, url
+                FROM pages
+                ORDER BY CASE
+                    WHEN title LIKE \'%'.$search.'%\' THEN 1
+                    WHEN content LIKE \'%'.$search.'%\' THEN 2
+                    ELSE 3
+                END;'); ?>
+
+                <table style="width:80%">
+                    <tr>
+                        <th>#</th>
+                        <th>Link</th>
+                    </tr>
+                    <?php foreach($links->results() as $link) {?>
+                        <tr>
+                            <td><?=$link->id?></td>
+                            <td><a href="<?=$link->url?>" target="_blank"><?=$link->url?></a></td>
+                        </tr>
+                    <?php }?>
+                </table>
+
+        <?php } ?>
+    </div>
+</div>
+
+
 
 </body>
 </html>

@@ -13,6 +13,7 @@ class DB
     {
         try {
             $this->_pdo = new PDO('mysql:host='. Config::get('mysql/host') .';dbname='. Config::get('mysql/db'), Config::get('mysql/username'), Config::get('mysql/password'));
+            $this->_pdo->exec("set names utf8");
         }catch (PDOException $e) {
             die($e->getMessage());
         }
@@ -87,7 +88,7 @@ class DB
         }
         $sql = "INSERT INTO $table (`" . implode('`,`', $keys) . "`) VALUES({$values})";
         if (!$this->query($sql, $fields)->error()){
-            return true;
+            return $this;
         }
         return false;
     }
