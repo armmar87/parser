@@ -49,14 +49,18 @@ class GetPagePars
 
         $this->get_all_pars['tree_model'] = htmlentities(file_get_contents($url));
 
+
+        $uniq_id = uniqid();
+        $this->get_all_pars['uniq_id'] = $uniq_id;
+        DB::getInstance()->insert('pages', $this->get_all_pars);
+
+        $this->createXmlFile($this->get_all_pars);
+
+/* recursively go through all inner links*/
 //        if($tag_a->length > 0){
-//            DB::getInstance()->insert('pages', $this->get_all_pars);
-//            $attr_href_all = [];
 //            foreach ($tag_a as $element) {
-//                $attr_href_all[] = $element->getAttribute('href');
+//                $attr_href = $element->getAttribute('href');
 //
-//            }
-//            foreach ($attr_href_all as $attr_href ) {
 //                preg_match('@^(?:http://)?([^/]+)@i', $attr_href, $matches1);
 //                preg_match('@^(?:http://)?([^/]+)@i', $url, $matches2);
 //                $host1 = isset($matches1[1])?$matches1[1]:'';
@@ -66,15 +70,8 @@ class GetPagePars
 //                    $page->getParsUrl($attr_href);
 //                }
 //            }
-//
-//            return false;
 //        }
 
-        $uniq_id = uniqid();
-        $this->get_all_pars['uniq_id'] = $uniq_id;
-        DB::getInstance()->insert('pages', $this->get_all_pars);
-
-        $this->createXmlFile($this->get_all_pars);
 
     }
 

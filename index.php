@@ -8,9 +8,6 @@ if(isset($_POST['url'])) {
     $getPars->getParsUrl($url);
 }
 
-$links = '';
-
-
 $pages = DB::getInstance()->query('SELECT * FROM pages');
 
 ?>
